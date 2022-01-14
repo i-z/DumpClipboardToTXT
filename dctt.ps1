@@ -1,6 +1,16 @@
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
+function Test-ValidFileName
+{
+    param([string]$FileName)
+
+    $IndexOfInvalidChar = $FileName.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars())
+
+    # IndexOfAny() returns the value -1 to indicate no such character was found
+    return $IndexOfInvalidChar -eq -1
+}
+
 $form = New-Object System.Windows.Forms.Form
 $form.Text = 'Data Entry Form'
 $form.Size = New-Object System.Drawing.Size(300,200)
@@ -51,5 +61,11 @@ $result = $form.ShowDialog()
 if ($result -eq [System.Windows.Forms.DialogResult]::OK)
 {
     $x = $textBox.Text
+    if(-not (Test-ValidFileName $x))
+    {
+        [System.IO.Path]::GetInvalidFileNameChars() | Foreach-Object {
+            $x = $x.Replace($_, ' ');
+        }
+    }
      $content | out-file -LiteralPath ($x + ".txt") -encoding utf8
 }
