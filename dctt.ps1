@@ -51,6 +51,5 @@ $result = $form.ShowDialog()
 if ($result -eq [System.Windows.Forms.DialogResult]::OK)
 {
     $x = $textBox.Text
-     #$content > ($x + ".txt")
-     $content | out-file ($x + ".txt") -encoding utf8
+     $content | out-file -LiteralPath ($x + ".txt") -encoding utf8
 }
