@@ -11,26 +11,53 @@ function Test-ValidFileName
     return $IndexOfInvalidChar -eq -1
 }
 
+$htmlBegin = @"
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+"@
+
+$htmlEnd = @"
+</body>
+</html>
+"@
+
 $form = New-Object System.Windows.Forms.Form
 $form.Text = 'Data Entry Form'
-$form.Size = New-Object System.Drawing.Size(300,200)
+$form.Size = New-Object System.Drawing.Size(300, 250)
 $form.StartPosition = 'CenterScreen'
 
 $okButton = New-Object System.Windows.Forms.Button
-$okButton.Location = New-Object System.Drawing.Point(75,120)
+$okButton.Location = New-Object System.Drawing.Point(55,160)
 $okButton.Size = New-Object System.Drawing.Size(75,23)
 $okButton.Text = 'OK'
 $okButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
 $form.AcceptButton = $okButton
 $form.Controls.Add($okButton)
 
+
 $cancelButton = New-Object System.Windows.Forms.Button
-$cancelButton.Location = New-Object System.Drawing.Point(150,120)
+$cancelButton.Location = New-Object System.Drawing.Point(170,160)
 $cancelButton.Size = New-Object System.Drawing.Size(75,23)
 $cancelButton.Text = 'Cancel'
 $cancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
 $form.CancelButton = $cancelButton
 $form.Controls.Add($cancelButton)
+
+$decorateWithImgCheck = New-Object System.Windows.Forms.CheckBox
+$decorateWithImgCheck.Location = New-Object System.Drawing.Point(10,120)
+$decorateWithImgCheck.Size = New-Object System.Drawing.Size(130,40)
+$decorateWithImgCheck.Text = 'Decorate with img'
+$form.Controls.Add($decorateWithImgCheck)
+
+$htmlOutput = New-Object System.Windows.Forms.CheckBox
+$htmlOutput.Location = New-Object System.Drawing.Point(150,120)
+$htmlOutput.Size = New-Object System.Drawing.Size(130,40)
+$htmlOutput.Text = 'HTML'
+$form.Controls.Add($htmlOutput)
 
 $content = Get-Clipboard
 $clipboardText = [System.Windows.Forms.Clipboard]::GetText()
@@ -67,5 +94,29 @@ if ($result -eq [System.Windows.Forms.DialogResult]::OK)
             $x = $x.Replace($_, ' ');
         }
     }
-     $content | out-file -LiteralPath ($x + ".txt") -encoding utf8
+    $ext = '.txt'
+    if ($decorateWithImgCheck.Checked -eq $true) {
+        $out = New-Object System.Text.StringBuilder
+        $imageTagBegin = '![]('
+        $imageTagEnd = ')' + [Environment]::NewLine + [Environment]::NewLine
+        if ($htmlOutput.Checked -eq $true) {
+            $out.Append($htmlBegin)
+            $imageTagBegin = '<p><img src="'
+            $imageTagEnd = '"></p>' + [Environment]::NewLine
+        }
+        ForEach ($line in $content){
+            $out.Append($imageTagBegin)
+            $out.Append($line)
+            $out.Append($imageTagEnd)
+        }
+        if ($htmlOutput.Checked -eq $true) {
+            $out.Append($htmEnd)
+            $out.ToString() | out-file -LiteralPath ($x + ".html") -encoding utf8
+        } else {
+            $out.ToString() | out-file -LiteralPath ($x + ".md") -encoding utf8
+        }
+        
+    } else {
+        $content | out-file -LiteralPath ($x + ".txt") -encoding utf8
+    }
 }
